@@ -38,9 +38,12 @@
 
 <style scoped>
     .shadow-container {
-        height: calc(97vh);
+        /* height: calc(97vh);
         min-height: 600px;
-        min-width: 1200px;
+        min-width: 1200px; */
+        display: flex;
+        flex-direction: column;
+        
     }
 
     .el-header{
@@ -61,7 +64,7 @@
         background-color: #E9EEF3;
         color: #333;
         align-items: stretch;
-        
+        flex: 1;
         /* text-align: center;
         line-height: 160px; */
     }
@@ -74,6 +77,7 @@
 
     padding: 20px; */
     border-top: 1px solid #e7e7e7; 
+    flex: 1;
 
   }
 
