@@ -66,7 +66,7 @@ export default Vue.extend({
                     //         this.$store.commit('modify_register', true)
                     
                     register(this.form).then((data)=>{
-                        console.log(data.data)
+                        // console.log(data.data)
                         
                         if(data.data.code===2000){
                             // Cookie.set('token',data.data.id);

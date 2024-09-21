@@ -13,7 +13,7 @@
             <el-form-item>
                 <el-button style="margin-left: 60px;margin-top: 10px;margin-right: 20px;" type="primary" :loading="false" @click="submitForm">登录</el-button>
                 <!-- <el-button style="margin-right: 120px;margin-top: 10px;" type="primary" @click="submitForm">注册</el-button> -->
-                <el-button v-if="register==false"   @click="resetForm">注册</el-button>
+                <el-button  @click="resetForm">注册</el-button>
             </el-form-item>
         </el-form>
     </el-card>
@@ -30,7 +30,7 @@
 <script>
 import Vue from 'vue'
 import { mapState } from 'vuex';
-import {initWebSocket} from "@/websocket/websocket";
+// import {initWebSocket} from "@/websocket/websocket";
 // import FooterComponent from "@/views/Footer";
 // import {ref} from 'vue'
 import Cookie from 'js-cookie'

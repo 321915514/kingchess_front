@@ -101,7 +101,8 @@ export default {
     },
     userconnect(msg){
         // console.log(msg);
-        if(msg.msg == true){
+        const currentPath = window.location.pathname;
+        if(msg.msg == true && currentPath !== '/login'){
             router.replace({name:'login'})
         }
     }

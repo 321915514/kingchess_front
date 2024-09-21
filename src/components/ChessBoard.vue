@@ -1181,6 +1181,7 @@ export default {
                 if (this.arr[arrX][arrY] == 1 && !this.isStone) { // 黑棋点击的第一次
                     this.boardcontext.clearRect(0, 0, this.width, this.height);
                     this.init_shadow_board(arrX, arrY);
+                    // this.init_board();
                     this.isStone = true;
                     this.stone = { x: arrX, y: arrY }
                     // console.log(this.isPlaying);
@@ -1375,6 +1376,7 @@ export default {
                     } else if (this.arr[arrX][arrY] == -1 && this.play_out > 32) {
                         this.boardcontext.clearRect(0, 0, this.width, this.height);
                         this.init_shadow_board(arrX, arrY);
+                        // this.init_board();
                         this.isStone = true;
                         this.stone = { x: arrX, y: arrY }
                         // console.log(this.isPlaying);
@@ -1405,7 +1407,6 @@ export default {
                         if (this.play_out <= 32) {
                             return;
                         } else {
-                            this.$message.info('白棋走棋')
                             if (this.arr[arrX][arrY] == 1) { // 判断这一步是不是白棋上
                                 this.$message.error("不能落在黑子上");
                                 this.stone = { x: -1, y: -1 };
@@ -1427,6 +1428,10 @@ export default {
                                 return;
                             }
 
+                            // 判断合法
+                            const distance = Math.sqrt(Math.pow(Math.abs(this.stone.x - arrX), 2) + Math.pow((Math.abs(this.stone.y - arrY)), 2));
+                            if(this.is_legal(this.stone.x, this.stone.y, arrX, arrY) && (distance <= Math.sqrt(2)) || (distance === 2 && this.is_legal(this.stone.x, this.stone.y, arrX, arrY))){
+                                
                             this.modify_arr(this.stone.x, this.stone.y, 0);
                             this.modify_arr(arrX, arrY, -1);
 
@@ -1468,6 +1473,17 @@ export default {
                             this.legal_black(e)
 
                             return;
+
+                            }else{
+                                this.$message.error('落子不合法');
+                                this.stone = { x: -1, y: -1 };
+                                this.isStone = false;
+                                this.boardcontext.clearRect(0, 0, this.width, this.height);
+                                this.init_board();
+                                return;
+                            }
+
+
                         }
                     }
                 }
@@ -2012,6 +2028,19 @@ export default {
                 || (ei == 0 && ej == 1) || (ei == 0 && ej == 3) || (ei == 8 && ej == 1) || (ei == 8 && ej == 3)) {
                 return false;
             }
+
+
+            if(this.arr[x][y] === -1){
+                const distance = Math.sqrt(Math.pow(Math.abs(x - x1), 2) + Math.pow((Math.abs(y - y1)), 2));
+                if(distance === 2){
+                    if((x == 0 && y == 0 && x1 == 0 && y1 == 2) || (x == 0 && y == 2 && x1 == 0 && y1 == 0) || (x == 0 && y == 4 && x1 == 0 && y1 == 2) || (x == 0 && y == 2 && x1 == 0 && y1 == 4) || (x == 8 && y == 0 && x1 == 8 && y1 == 2) || (x == 8 && y == 2 && x1 == 8 && y1 == 0) || (x == 8 && y == 4 && x1 == 8 && y1 == 2) || (x == 8 && y == 2 && x1 == 8 && y1 == 4)){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                }
+            }
+
             return true;
         },
 
@@ -2249,9 +2278,10 @@ export default {
             let context = this.boardcontext
             context.beginPath()
             context.arc(this.current + j * this.current, this.current + i * this.current, 15 / 3, 0, 2 * Math.PI)
-            context.closePath()
+            
             context.fillStyle = 'green'
             context.fill()
+            context.closePath()
         },
 
         chess(s) {
@@ -2383,6 +2413,9 @@ export default {
                 this.eat_chess = step.state.eat_c
 
                 this.play_out = step.state.play_out
+                if(this.play_out == 33){
+                    this.$message.info('白棋走棋')
+                }
                 // console.log('chess playout');
                 // console.log(this.play_out);
                 this.chess(step.state)
