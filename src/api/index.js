@@ -26,16 +26,44 @@ export const findAll =(params)=>{
 export const login =(data)=>{
     // console.log(data);
 return http.post('http://117.72.75.113/api/user/login',data)
+    // return http.post('http://10.151.37.243:5000/user/login', data)
+}
+export const logout =(data)=>{
+    // console.log(data);
+return http.post('http://117.72.75.113/api/user/logout',data)
+    // return http.post('http://10.151.37.243:5000/user/logout', data)
 }
 export const register =(data)=>{
-    console.log(data);
-    return http.post('http://117.72.75.113/api/user/register',data)
-}
-export const beginGame =(data)=>{
     // console.log(data);
-    return http.post('http://117.72.75.113/api/new_game/random',data)
+    return http.post('http://117.72.75.113/api/user/register',data)
+    // return http.post('http://10.151.37.243:5000/user/register', data)
 }
-export const selectMove = (data)=>{
-    return http.post('http://117.72.75.113/api/select-move/mcts',data)
+// export const beginGame =(data)=>{
+//     // console.log(data);
+//     return http.post('http://117.72.75.113/api/new_game/random',data)
+// }
+// export const selectMove = (data)=>{
+//     return http.post('http://117.72.75.113/api/select-move/mcts',data)
+// }
+
+export const get_sgf_data = (data)=>{
+    // return http.post('http://10.151.37.243:5000/common/get_all_sgf', data)
+    return http.post('http://117.72.75.113/api/common/get_all_sgf', data)
 }
 
+export const get_sgf_by_user = (data)=>{
+    // return http.post('http://10.151.37.243:5000/common/get_sgf_by_user', data)
+    return http.post('http://117.72.75.113/api/common/get_sgf_by_user', data)
+}
+
+
+
+export const get_win_data = (data)=>{
+    // return http.post('http://10.151.37.243:5000/common/get_win_rate', data)
+    return http.post('http://117.72.75.113/api/common/get_win_rate', data)
+}
+
+export const userLogin = (data)=>{
+    // return http.post('http://10.151.37.243:5000/user/get_ttl_user', data)
+    return http.post('http://117.72.75.113/api/user/get_ttl_user', data)
+}

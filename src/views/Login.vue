@@ -64,6 +64,68 @@ export default Vue.extend({
         ...mapState(['register'])
     },
 
+    mounted(){
+        let state = {
+        // loginName:'',
+        isPlaying: true,
+        register: false,
+        // eat_chess: 0,
+        // play_out:0,
+        player: {
+            id: "x",
+            name: "x",
+            status: "x"
+        },
+        playerTable: {
+            roomId: '',
+            players: []
+        },
+        step: {},
+        chessboard: {
+            roomId: '',
+            steps: []
+        },
+        matchDetails: {
+            roomId: '',
+            host: {
+                name: 'Tom',
+                color: 'black',
+                turn: true,
+                roomStatus: 'ready'
+            },
+            challenger: {
+                id: "",
+                name: '',
+                color: 'white',
+                turn: false,
+                roomStatus: 'unready'
+            },
+            black_end_state:{},
+        },
+        roomChatDTO: {            
+            "time": "2020-03-31 16:43:00",
+            "from": "sys",
+            "content": "Welcome to Gobang Online!"
+        },
+        gameOverDTO: {},
+        drawDTO: {},
+        retractDTO: {},
+        hallDialogMsg: {
+            "time": "2020-03-31 16:43:00",
+            "from": "sys",
+            "content": "Welcome to Gobang Online!"
+        },
+        activeTabKey: 'hall',
+        tabs: [{
+            roomId: 'hall',
+            title: '【Hall】',
+            type: 'hall'
+        }],
+        rooms: []
+    }
+        this.$store.replaceState(state);
+    },
+
     // watch:{
     //     "register":{
     //         handler(newvalue){
@@ -85,10 +147,11 @@ export default Vue.extend({
                 if(vaild){
                     this.loading = true;
                     login(this.form).then((data)=>{
-                        console.log(data.data);
+                        // console.log(data.data);
                         if(data.data.code===2000){
                             // initWebSocket()
                             // Cookie.set('id',data.data.id);
+                            // Cookie.set('id_set_time', Date.now());
                             // Cookie.set('name',this.form.username)
                             // 存入store
                             // console.log(data.data.data.menu);

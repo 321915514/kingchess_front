@@ -7,7 +7,7 @@ import store from '@/store'
 
 
 const url = "ws://117.72.75.113"
-// const url = "ws://127.0.0.1:5000"
+// const url = "ws://10.151.37.243:5000"
 let ws = {}
 
 export function initWebSocket() {
@@ -30,7 +30,7 @@ export function initWebSocket() {
     })
 
     ws.on("message", function(msg){
-        // console.log(msg);
+     
         let data = msg.data
         switch(msg.code) {
             case code.Fail:
@@ -84,6 +84,15 @@ export function initWebSocket() {
                 break
             case code.userconnect:
                 receive.userconnect(data)
+                break
+            case code.roomExpire:
+                receive.roomExpire(data)
+                break
+            case code.userLogin:
+                receive.userLogin(data)
+                break
+            case code.ttlRoom:
+                receive.ttlRoom(data)
                 break
             default:
                 break

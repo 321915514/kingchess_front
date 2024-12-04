@@ -23,8 +23,19 @@ export default new Router({
         children: [{
             path: '/game',
             name: 'game',
-            component: () => import('@/views/Game')
-        }, {
+            component: () => import('@/views/Game'),
+        },
+        {
+            path: '/playhistory',
+            name: 'playhistory',
+            component: () => import('@/views/PlayHistory')
+        },
+        {
+            path: '/rank',
+            name: 'rank',
+            component: () => import('@/views/Rank')
+        },
+         {
             path: '/settings',
             name: 'settings',
             component: () => import('@/views/Settings')

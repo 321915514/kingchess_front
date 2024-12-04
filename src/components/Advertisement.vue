@@ -17,6 +17,8 @@
 
          <span>8. 当黑棋吃掉11颗白子或白棋无法困住黑棋时，黑胜。</span>
 
+         <span style="color: red;">补充. 白棋走棋不能来回走。</span>
+
          </div>
     </div>
 </template>
@@ -38,11 +40,13 @@
     }
     .container {
         margin-top: 3%;
-        height: calc(50vh);
+        height: calc(49.2vh);
+        /* height: 100%; */
         min-height: 180px;
         display: flex;
     }
     .content{
+        /* height: 100%; */
         border: 1px solid black ;
         border-radius: 10px;
         margin-top: 3px;
@@ -53,17 +57,18 @@
         padding-bottom: 2vh;
         flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: column; 
 
         overflow-x: auto; /* 水平滚动条 */
+        overflow-y: auto
 
     }
-    div span{
+    /* div span{
         flex: 1;
         
-    }
+    } */
 
-    /* div span {
+    div span {
       font-size: 1em;
 
     }
@@ -80,6 +85,6 @@
         font-size: 1.2em;
 
       }
-    } */
+    }
 
 </style>

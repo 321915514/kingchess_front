@@ -25,12 +25,16 @@
     import PlayerDetails from "@/components/Profile";
     import Advertisement from "@/components/Advertisement";
     import RoomTable from "@/components/RoomTable";
+
+    import { userLogin } from "@/websocket/send-api";
     // import FooterComponent from "@/views/Footer";
 
     export default {
         name: "Hall",
         components: {RoomTable, Advertisement, PlayerDetails, Dialog, PlayerTable},
-
+        mounted() {
+            userLogin(this.$store.getters.player.id)
+        }
     }
 </script>
 

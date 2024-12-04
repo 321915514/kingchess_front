@@ -9,7 +9,21 @@
                     <el-menu-item :index="item.path" :key="item.path">
                         <span slot="title">{{$t('lang.layout.' + item.name)}}</span>
                     </el-menu-item>
+
                 </template>
+                <template>
+                    <el-dropdown style="margin-top: 10px; margin-left: 10px;" @command="handleLogout">
+                    <span class="el-dropdown-link">
+                        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+                            size="medium"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <!-- <el-dropdown-item>个人中心</el-dropdown-item> -->
+                        <el-dropdown-item command="logout" style="color: red;">退出</el-dropdown-item>
+                    </el-dropdown-menu>
+            </el-dropdown>
+                </template>
+
             </el-menu>
             </el-header>
             <el-main>
@@ -26,23 +40,49 @@
 </template>
 
 <script>
+    import Vue from 'vue'
+    import {logout} from "../api/index"
+    import Cookie from 'js-cookie'
     export default {
         name: "Layout",
         data() {
             return {
 
             }
-        }
+        },
+        methods:{
+            handleLogout(){
+                const id  = Cookie.get('id');
+                // alert(id)
+                logout(id).then((data)=>{
+                    // console.log(data.data);
+                    if(data.data.code===2000){
+                        // Cookie.remove('id')
+                        // Cookie.remove('id_set_time');
+                        // console.log("退出");
+                        
+                        this.$router.replace('login');
+                    }
+                })
+            }
+        },
     }
 </script>
 
 <style scoped>
+    /* html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    } */
     .shadow-container {
         /* height: calc(97vh);
         min-height: 600px;
         min-width: 1200px; */
+        height: 100%;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
         
     }
 
@@ -65,8 +105,11 @@
         color: #333;
         align-items: stretch;
         flex: 1;
+        height: 100vh;
         /* text-align: center;
         line-height: 160px; */
+        display: flex;
+        flex-direction: column;
     }
 
     .el-footer {
@@ -80,6 +123,9 @@
     flex: 1;
 
   }
+  /* body {
+  overflow: hidden;
+} */
 
 
 

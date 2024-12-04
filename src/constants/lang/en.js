@@ -28,6 +28,8 @@ export const lang = {
         game: 'Game',
         settings: 'Settings',
         about: 'About',
+        playhistory: 'play history',
+        rank: 'rank',
         title: '国王与大臣棋'
     },
     about: {
@@ -86,7 +88,8 @@ export const lang = {
                 eat_11: 'chess 11 chess Winner: ',
                 escape: ' escapes. Winner: ',
                 surrender: ' gives up. Winner: ',
-                no_move: 'Black have no move. Winner:'
+                no_move: 'Black have no move. Winner:',
+                go_back:"can't go back and front"
             },
             askDraw: {
                 title: 'Ask Draw',

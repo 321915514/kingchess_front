@@ -15,6 +15,8 @@ export default {
         }
     },
     getRooms(rooms) {
+        // console.log(rooms);
+        
         store.dispatch('setRooms', rooms)
     },
     createRoom(room) {
@@ -22,6 +24,9 @@ export default {
         this.enterRoom(room)
     },
     enterRoom(room) {
+        // alert("加入房间")
+        store.dispatch('setRoom', room)
+        // console.log(room);
         store.dispatch('addTab', room).then(() => {
             store.dispatch('changeTab', room.id)
             store.dispatch(('setPlayerTable'), {
@@ -37,10 +42,10 @@ export default {
                 roomId: room.id,
                 steps: room.steps
             })
+
         })
     },
     leaveRoom(room) {
-        // console.log(room);
         // store.dispatch('addTab', room).then(() => {
             
             store.dispatch('setPlayerTable', {
@@ -57,6 +62,7 @@ export default {
                 roomId: room.id,
                 steps: room.steps
             })
+            store.dispatch('setRoom', room)
         // })
     },
     delRoom(roomId) {
@@ -85,6 +91,7 @@ export default {
             host: room.host,
             challenger: room.challenger
         })
+        store.dispatch('setRoom', room)
     },
     makeStep(step) {
         store.dispatch('setStep', step)
@@ -96,7 +103,6 @@ export default {
         store.dispatch('setDrawDTO', drawDTO)
     },
     retractStep(retractDTO) {
-        console.log(retractDTO);
         store.dispatch('setRetractDTO', retractDTO)
     },
     userconnect(msg){
@@ -105,7 +111,73 @@ export default {
         if(msg.msg == true && currentPath !== '/login'){
             router.replace({name:'login'})
         }
+    },
+    roomExpire(msg){
+        const rids = msg.rid
+        const uids = msg.uid
+        // console.log(store.getters.tabs);
+        uids.forEach(uid=>{
+            if(uid == store.getters.player.id){
+                alert("您已掉线，请重新登录")
+                store.dispatch('setPlayer',{})
+            }
+        })
+
+        rids.forEach((rid, i)=>{
+            store.getters.tabs.forEach(tab=>{
+                if(store.getters.activeTabKey == rid){
+                    store.dispatch("changeTab",'hall')
+                }
+                if(tab.roomId == rid){
+                    store.dispatch("removeTab",rid)
+                    store.dispatch('delRoomById',rid)
+                }
+            })
+
+            // if(store.getters.activeTabKey == rid){
+            //     store.dispatch("changeTab",'hall')
+            //     store.dispatch('removeTab', rid)
+            //     store.dispatch('delRoomById',rid)
+            // }
+            // store.dispatch('removeTab', rid)
+            // store.dispatch('delRoomById',rid)
+            
+        })
+    },
+    userLogin(msg){
+        // console.log(msg);
+        // alert(msg)
+        if(msg.t<=0){
+            alert("您已掉线，请重新登录")
+            const currentPath = window.location.pathname;
+            if(currentPath !== '/login'){
+                router.replace({name:'login'})
+            }
+        }
+    },
+    ttlRoom(msg){
+        // console.log(msg);
+        // console.log(msg.t);
+        
+        // alert(msg)
+        if(msg.t<=0){
+            store.getters.tabs.forEach(tab=>{
+                if(store.getters.activeTabKey == msg.rid){
+                    store.dispatch("changeTab",'hall')
+                }
+
+                  if(tab.roomId == msg.rid){
+                    store.dispatch("removeTab",msg.rid)
+                    store.dispatch('delRoomById',msg.rid)
+                }
+            })
+        }else{
+            store.dispatch('setRoomChatDTO', msg)
+        }
+
     }
 }
+
+
 
 // export function

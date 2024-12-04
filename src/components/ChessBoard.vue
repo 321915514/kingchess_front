@@ -1,8 +1,8 @@
 <template>
-    <el-container>
+    <el-container class="el-container">
         <el-header style="height: 20px; display: block; text-align: center">
             <span v-if="!started" style="font-size: large; font-weight: bold">{{ title }}</span>
-            <el-button size="mini" style="float: right"
+            <el-button class='exit_btn' size="mini" style="float: right"
                 @click="onExit()">{{ $t('lang.chessboard.button.exit') }}</el-button>
         </el-header>
         <el-main>
@@ -18,10 +18,8 @@
         <el-footer align="center" style="height: 20px">
             <audio ref="down" src="../assets/audio/down.mp3"></audio>
             <audio ref="eat" src="../assets/audio/eat.mp3"></audio>
-            <el-button size="mini" @click="onRetract()"
-                :disabled="buttonDisabled">{{ $t('lang.chessboard.button.retract') }}</el-button>
-            <el-button size="mini" @click="onSurrender()"
-                :disabled="buttonDisabled">{{ $t('lang.chessboard.button.surrender') }}</el-button>
+            <el-button size="mini" @click="onRetract()" :disabled="buttonDisabled" >{{ $t('lang.chessboard.button.retract') }}</el-button>
+            <el-button size="mini" @click="onSurrender()" :disabled="buttonDisabled">{{ $t('lang.chessboard.button.surrender') }}</el-button>
             <!-- <el-button size="mini" @click="onDraw()" :disabled="buttonDisabled">{{$t('lang.chessboard.button.draw')}}</el-button> -->
         </el-footer>
     </el-container>
@@ -41,9 +39,9 @@
 // import { beginGame, selectMove } from '@/api';
 
 // import constant from "../constants/color";
-import { askDraw, delRoom, leaveRoom, makeStep, gameOver, retractStep, surrender } from "../websocket/send-api";
+import { askDraw, delRoom, leaveRoom, makeStep, gameOver, retractStep, surrender, ttlRoom, getRooms } from "../websocket/send-api";
 import { setPlayerStatus } from "../websocket/send-api";
-
+import eventBus from "@/utils/event-bus";
 
 export default {
     name: "ChessBoard",
@@ -83,7 +81,10 @@ export default {
             title: this.$t('lang.chessboard.message.clickReady'), // this.$t('lang.chessboard.message.clickReady')
             started: false,
             waitResponse: false,
-            isDisabled: true
+            isDisabled: true,
+            r:15,
+            timer:null,
+            t:null,
 
         }
     },
@@ -131,6 +132,20 @@ export default {
     },
     methods: {
 
+        removeSpectatorByRoomIdAndUserId(roomid, userId) {
+            let targetRoom = this.$store.getters.rooms.find(room => room.id === roomid);
+            // console.log(targetRoom);
+            
+            if (targetRoom) {
+                // 在找到的房间的spectators数组中查找要删除的用户
+                let index = targetRoom.spectators.findIndex(spectator => spectator.id === userId);
+                if (index!== -1) {
+                    // 如果找到该用户，使用splice方法删除
+                    targetRoom.spectators.splice(index, 1);
+                } 
+            } 
+        },
+
         // modify(){
         //     this.play_out++;
         // },
@@ -155,25 +170,38 @@ export default {
             retractStep(this.roomId, this.$store.getters.player.id, 1)
         },
         onExit() {
+            // console.log(this.$store.getters.matchDetails);
+            // if(this.$store.getters.matchDetails.challenger.id == ''){
+            //     eventBus.$emit('exitRoom','not user')
+            // }
             this.$store.dispatch('removeTab', this.roomId)
-
+            getRooms()
             if (this.$store.getters.player.id === this.$store.getters.matchDetails.host.id) {
                 delRoom(this.roomId)
                 // 设置对手
-                // this.$store.dispatch('setChallenger', {})
-            } else {
-
+                this.$store.dispatch('setChallenger', {id:""})
+            } else if (this.$store.getters.player.id === this.$store.getters.matchDetails.challenger.id) {
                 leaveRoom(this.roomId, this.$store.getters.player.id)
+                this.$store.dispatch('setChallenger', {id:""})
+            }else{
+                // console.log(this.$store.getters.matchDetails)
+                
+                leaveRoom(this.roomId, this.$store.getters.player.id)
+                this.$store.dispatch('setChallenger', {id:""})
+
+                // this.removeSpectatorByRoomIdAndUserId(this.roomId, this.$store.getters.player.id)
             }
             setPlayerStatus("leisure")
         },
         onSurrender() {
-            surrender(this.roomId)
+            // surrender(this.roomId)
+            // alert(this.myColor)
             if (this.myColor == 0) {
-                gameOver(this.roomId, this.$store.getters.matchDetails, 'black', 'surrender')
+                gameOver(this.roomId, this.$store.getters.matchDetails, 'white', 'surrender')
+                
             }
             else if (this.myColor == 1) {
-                gameOver(this.roomId, this.$store.getters.matchDetails, 'white', 'surrender')
+                gameOver(this.roomId, this.$store.getters.matchDetails, 'black', 'surrender')
             }
         },
         // onDraw() {
@@ -431,6 +459,22 @@ export default {
                 this.boardcontext.lineTo(this.current, this.current * 9);
                 this.boardcontext.stroke();
 
+                    // 坐标
+                      // 显示坐标
+                this.boardcontext.font = '15px Arial';
+                this.boardcontext.textAlign = 'center';
+                this.boardcontext.textBaseline = 'middle';
+                for (let i = 0; i < 9; i++) {
+                    
+                    // 纵向坐标
+                    this.boardcontext.fillText(String(i + 1), 30, ((i + 0.5) * 50)+25);
+                }
+
+                for(let i=0;i<5;i++){
+                    // 恒
+                    this.boardcontext.fillText(String(1 + i), ((i + 0.5) * 50)+25, 30);
+                }
+
             }
 
         },
@@ -438,6 +482,25 @@ export default {
         init_board() {
             if (this.boardcontext != null) {
                 this.boardcontext.clearRect(0, 0, this.width, this.height);
+
+                // 清除可能存在的绿色圈（半径为 10）
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        this.boardcontext.beginPath();
+                        this.boardcontext.arc(this.current + j * this.current, this.current + i * this.current, this.r, 0, 2 * Math.PI);
+                        this.boardcontext.clearRect(this.current + j * this.current - 10, this.current + i * this.current - 10, 20, 20);
+                        this.boardcontext.closePath();
+                    }
+                }
+
+                    // 设置文本颜色为黑色
+                    this.boardcontext.fillStyle = '#000';
+                    this.boardcontext.font = '15px Arial';
+                    this.boardcontext.textAlign = 'center';
+                    this.boardcontext.textBaseline = 'middle';
+
+
+
                 this.drawboard();
                 for (let i = 0; i < this.arr.length; i++) {
                     for (let j = 0; j < this.arr[0].length; j++) {
@@ -448,9 +511,9 @@ export default {
                         if (this.arr[i][j] === 1) {
                             this.boardcontext.beginPath();
                             // console.log(i, j);
-                            this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                            this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
 
-                            let g = this.boardcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
+                            let g = this.boardcontext.createRadialGradient(x - 7, y - 7, 0, x - 7, y - 7, this.r);
                             g.addColorStop(0, '#ccc');
                             g.addColorStop(1, '#000');
                             this.boardcontext.fillStyle = g;
@@ -460,8 +523,8 @@ export default {
                         }
                         if (this.arr[i][j] === -1) {
                             this.boardcontext.beginPath();
-                            this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
-                            let g = this.boardcontext.createRadialGradient(x + 5, y + 5, 0, x + 5, y + 5, 10);
+                            this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
+                            let g = this.boardcontext.createRadialGradient(x + 7, y + 7, 0, x + 7, y + 7, this.r);
                             g.addColorStop(0, '#666');
                             g.addColorStop(1, '#fff');
                             this.boardcontext.fillStyle = g;
@@ -488,9 +551,9 @@ export default {
                             if (this.arr[i][j] === 1) {
                                 this.boardcontext.beginPath();
                                 // console.log(i, j);
-                                this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
 
-                                let g = this.boardcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
+                                let g = this.boardcontext.createRadialGradient(x - 7, y - 7, 0, x - 7, y - 7, this.r);
                                 g.addColorStop(0, '#ccc');
                                 g.addColorStop(1, '#000');
                                 this.boardcontext.fillStyle = g;
@@ -500,7 +563,7 @@ export default {
                         } else if (color == '#fff') {
                             if (this.arr[i][j] === -1) {
                                 this.boardcontext.beginPath();
-                                this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
                                 let g = this.boardcontext.createRadialGradient(x + 5, y + 5, 0, x + 5, y + 5, 10);
                                 g.addColorStop(0, '#666');
                                 g.addColorStop(1, '#fff');
@@ -618,9 +681,9 @@ export default {
 
                             this.boardcontext.beginPath();
                             // console.log(i, j);
-                            this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                            this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
 
-                            let g = this.boardcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
+                            let g = this.boardcontext.createRadialGradient(x - 7, y - 7, 0, x - 7, y - 7, this.r);
                             g.addColorStop(0, '#ccc');
                             g.addColorStop(1, '#000');
                             this.boardcontext.fillStyle = g;
@@ -638,9 +701,9 @@ export default {
                         else if (this.arr[i][j] === 1) {
                             this.boardcontext.beginPath();
                             // console.log(i, j);
-                            this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                            this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
 
-                            let g = this.boardcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
+                            let g = this.boardcontext.createRadialGradient(x - 7, y - 7, 0, x - 7, y - 7, this.r);
                             g.addColorStop(0, '#ccc');
                             g.addColorStop(1, '#000');
                             this.boardcontext.fillStyle = g;
@@ -800,7 +863,10 @@ export default {
             this.$set(this.state, "eat_c", this.eat_chess);
             // console.log("state", this.state);
 
-            this.states.push(this.state);
+            // this.states.push(this.state);
+
+            // console.log(this.states)
+
             // this.states.at.push(this.state);
 
             // console.log(this.states);
@@ -1016,7 +1082,7 @@ export default {
                     }
                 }
             }
-            // console.log(kings);
+            // console.log("kings"+kings);
 
             let count = 0
             let neighbors_sum = 0
@@ -1024,18 +1090,19 @@ export default {
                 // kings
                 //继续
                 let neighbors = this.neighbors(kings[i])
-                // console.log(neighbors);
+                // console.log("neighbors"+ neighbors)
                 for (let j = 0; j < neighbors.length; j++) {
                     if (this.legal_pos(neighbors[j])) {
                         neighbors_sum++
+                        // console.log(this.arr[neighbors[j][0]][neighbors[j][1]])
                         if (this.arr[neighbors[j][0]][neighbors[j][1]] != 0) {
                             count++
                         }
                     }
                 }
             }
-            // console.log(neighbors_sum);
-            // console.log(count);
+            // console.log("neighbors_sum"+neighbors_sum);
+            // console.log("count"+count);
             if (count === neighbors_sum) {
 
                 // this.$alert('游戏结束,白棋胜利');
@@ -1079,6 +1146,7 @@ export default {
                 for (let j = 0; j < neighbors.length; j++) {
                     if (this.legal_pos(neighbors[j])) {
                         neighbors_sum++
+                        // console.log(this.arr[neighbors[j][0]][neighbors[j][1]])
                         if (this.arr[neighbors[j][0]][neighbors[j][1]] != 0) {
                             count++
                         }
@@ -1092,9 +1160,6 @@ export default {
                 // this.$alert('游戏结束,白棋胜利');
                 // if()
                 gameOver(this.roomId, this.$store.getters.matchDetails, 'white', 'no_move')
-
-
-
                 return;
 
             }
@@ -1254,9 +1319,9 @@ export default {
                                     // 发送请求
 
 
-                                    makeStep(this.roomId, this.state, this.$store.getters.player.name)
+                                    // makeStep(this.roomId, this.state, this.$store.getters.player.name)
 
-
+                                    this.$store.getters.matchDetails.black_end_state = this.state
                                     //游戏结束
                                     // this.$alert('游戏结束,黑方胜');
                                     gameOver(this.roomId, this.$store.getters.matchDetails, 'black', 'eat_11')
@@ -1272,6 +1337,14 @@ export default {
                                 this.modify_state(String(this.stone.x) + String(this.stone.y) + String(arrX) + String(arrY), String(coord_eat / 5 | 0) + String(coord_eat % 5 | 0), 1, 0, this.play_out);
                                 // 发送请求
                                 this.waitResponse = true;
+
+
+                      
+
+
+
+
+
 
                                 makeStep(this.roomId, this.state, this.$store.getters.player.name)
 
@@ -1366,11 +1439,12 @@ export default {
                         this.modify_state(String(arrX) + String(arrY), "-1", -1, 0, this.play_out);
                         // 发送请求
                         this.waitResponse = true;
+                        this.legal_black(e)
                         makeStep(this.roomId, this.state, this.$store.getters.player.name)
                         if (this.isPlaying) {
                             this.$refs.down.play()
                         }
-                        this.legal_black(e)
+                        
 
                         return;
                     } else if (this.arr[arrX][arrY] == -1 && this.play_out > 32) {
@@ -1431,6 +1505,29 @@ export default {
                             // 判断合法
                             const distance = Math.sqrt(Math.pow(Math.abs(this.stone.x - arrX), 2) + Math.pow((Math.abs(this.stone.y - arrY)), 2));
                             if(this.is_legal(this.stone.x, this.stone.y, arrX, arrY) && (distance <= Math.sqrt(2)) || (distance === 2 && this.is_legal(this.stone.x, this.stone.y, arrX, arrY))){
+                                // 检查来回走,白棋不允许来回走
+
+                                const current_move = String(this.stone.x) + String(this.stone.y) + String(arrX) + String(arrY)
+                                
+                                // console.log(this.states);
+                                
+
+                                // console.log(this.states[this.states.length-4].move)
+                                // console.log(current_move);
+                                
+
+                                if(current_move === this.states[this.states.length-4].move){
+                                    // 来回走了
+                                    gameOver(this.roomId, this.$store.getters.matchDetails, 'black', 'go back')
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    return;
+
+                                }
+
+                                // 检查完毕
+
                                 
                             this.modify_arr(this.stone.x, this.stone.y, 0);
                             this.modify_arr(arrX, arrY, -1);
@@ -1463,18 +1560,19 @@ export default {
                             // this.stone.y = -1;
                             this.stone = { x: -1, y: -1 }
 
-
-
+                            this.legal_black(e)
+                             
                             makeStep(this.roomId, this.state, this.$store.getters.player.name)
                             if (this.isPlaying) {
                                 this.$refs.down.play()
                             }
 
-                            this.legal_black(e)
+                            
 
                             return;
 
                             }else{
+
                                 this.$message.error('落子不合法');
                                 this.stone = { x: -1, y: -1 };
                                 this.isStone = false;
@@ -2076,8 +2174,8 @@ export default {
             if (color == '#000') {
                 this.boardcontext.beginPath();
                 // this.blackcontext.translate(x, y)
-                this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
-                let g = this.boardcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
+                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
+                let g = this.boardcontext.createRadialGradient(x - 7, y - 7, 0, x - 7, y - 7, this.r);
                 g.addColorStop(0, '#ccc');
                 g.addColorStop(1, '#000');
                 this.boardcontext.fillStyle = g;
@@ -2089,7 +2187,7 @@ export default {
             if (color == '#fff') {
                 this.boardcontext.beginPath();
                 // this.blackcontext.translate(x, y)
-                this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
                 let g = this.boardcontext.createRadialGradient(x + 5, y + 5, 0, x + 5, y + 5, 10);
                 g.addColorStop(0, '#666');
                 g.addColorStop(1, '#fff');
@@ -2112,7 +2210,7 @@ export default {
             if (color == '#000') {
                 this.boardcontext.beginPath();
                 // this.blackcontext.translate(x, y)
-                this.boardcontext.arc(x, y, 15, 0, 2 * Math.PI);
+                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
                 // let g = this.blackcontext.createRadialGradient(x - 5, y - 5, 0, x - 5, y - 5, 10);
                 // g.addColorStop(0, '#ccc');
                 // g.addColorStop(1, '#000');
@@ -2125,7 +2223,7 @@ export default {
             if (color == '#fff') {
                 this.boardcontext.beginPath();
                 // this.blackcontext.translate(x, y)
-                this.boardcontext.arc(x, y, 10, 0, 2 * Math.PI);
+                this.boardcontext.arc(x, y, this.r, 0, 2 * Math.PI);
                 // let g = this.whitecontext.createRadialGradient(x + 5, y + 5, 0, x + 5, y + 5, 10);
                 // g.addColorStop(0, '#666');
                 // g.addColorStop(1, '#fff');
@@ -2285,17 +2383,22 @@ export default {
         },
 
         chess(s) {
-            // console.log(s.state);
+            // console.log(s);
             this.arr = [...s.board];
             this.boardcontext.clearRect(0, 0, this.width, this.height);
             this.init_board()
             this.drawLabel(s.move[0], s.move[1])
             this.drawLabel(s.move[2], s.move[3])
 
-
+            // console.log("eat chess:"+ this.eat_chess);
+            
+            // console.log(this.eat_chess >= 11);
+            
 
             if (this.eat_chess >= 11) {
+                this.$store.getters.matchDetails.black_end_state = this.state
                 gameOver(this.roomId, this.$store.getters.matchDetails, 'black', 'eat_11')
+                // console.log("发送吃11子游戏结束");
                 return;
             }
             this.legal_kings()
@@ -2317,14 +2420,17 @@ export default {
         chessboardDisabled() {
             // console.log(this.myColor);
             // console.log(this.turn);
+            // console.log(this.steps);
+            
             return this.myColor !== this.turn || this.waitResponse
+            // return  this.waitResponse
+        },
+        buttonDisabled() {
+            return this.myColor !== this.turn || this.waitResponse || this.steps.length<3
         },
         // buttonDisabled() {
-        //     return this.myColor !== this.turn || this.waitResponse || this.steps.length<3
+        //     return true
         // },
-        buttonDisabled() {
-            return true
-        },
         step() {
             return this.$store.getters.step
         },
@@ -2343,7 +2449,8 @@ export default {
         isPlaying() {
             // console.log(this.$store.getters.isPlaying);
             return this.$store.getters.isPlaying
-        }
+        },
+
     },
     watch: {
         // eat_chess(newvalue){
@@ -2366,6 +2473,14 @@ export default {
 
                     this.$store.dispatch('setStep', {})
 
+                    // 如果计时器正在运行，清除它
+                    if (this.timer !== null) {
+                        // console.log(this.timer);
+                        clearInterval(this.timer);
+                        this.timer = null;
+                    }
+
+
                     let id = this.$store.getters.player.id
                     if (details.host.id === id) {
                         this.myColor = details.host.color
@@ -2374,6 +2489,16 @@ export default {
                     else if (details.challenger.id === id) {
                         this.myColor = details.challenger.color
                         return
+                    }
+                    if(details.challenger.id != id && details.host.id != id){
+                        this.isDisabled = true
+                    }
+
+                }else{
+                    if (this.timer === null){
+                        this.timer = setInterval(() => {
+                           ttlRoom(this.roomId);
+                        }, 1000);
                     }
                 }
                 this.myColor = -1
@@ -2439,6 +2564,11 @@ export default {
                 else if (gameOverDTO.cause === 'surrender') {
                     this.title = gameOverDTO.loser.name + this.$t('lang.chessboard.message.over.surrender') + gameOverDTO.winner.name
                 }
+                else if (gameOverDTO.cause === 'go back') {
+                    this.title = gameOverDTO.loser.name + this.$t('lang.chessboard.message.over.go_back') + gameOverDTO.winner.name
+                }
+
+
                 // else if (gameOverDTO.cause === 'draw') {
                 //     this.waitResponse = false
                 //     this.title = this.$t('lang.chessboard.message.over.draw')
@@ -2483,7 +2613,7 @@ export default {
             // console.log(retractDTO);
             if (retractDTO.rid === this.roomId) {
                 if (retractDTO.consent === 1) {
-                    if (retractDTO.id != this.$store.getters.player.id) {
+                    if (retractDTO.id != this.$store.getters.player.id && (this.$store.getters.player.id === this.matchDetails.host.id || this.$store.getters.player.id === this.matchDetails.challenger.id) ) {
                         this.$confirm(this.$t('lang.chessboard.message.askRetract.info'), this.$t('lang.chessboard.message.askRetract.title'), {
                             confirmButtonText: this.$t('lang.pop.yes'),
                             cancelButtonText: this.$t('lang.pop.no'),
@@ -2497,63 +2627,80 @@ export default {
                 }
                 else if (retractDTO.consent === 0) {
                     this.waitResponse = false
-                    if (retractDTO.id == this.$store.getters.player.id) {
+                    if (retractDTO.id == this.$store.getters.player.id && (this.$store.getters.player.id === this.matchDetails.host.id || this.$store.getters.player.id === this.matchDetails.challenger.id)) {
                         this.$alert(this.$t('lang.chessboard.message.rejectRetract.info'), this.$t('lang.chessboard.message.rejectRetract.title'))
                     }
                 }
                 else if (retractDTO.consent === 2) {
-                    if (retractDTO.id == this.$store.getters.player.id) {
+                    if (retractDTO.id == this.$store.getters.player.id && (this.$store.getters.player.id === this.matchDetails.host.id || this.$store.getters.player.id === this.matchDetails.challenger.id)) {
                         this.$message.info(this.$t('lang.chessboard.message.agreeRetract.info'))
                     }
+                    
 
 
-                    for (let i = 0; i < 2; i++) {
-                        let lastIndex = this.steps.length - 1
-
-
-
-
-                        // console.log('111111111111111');
-
-                        // this.boardcontext.clearRect(0, 0, this.width, this.height);
-                        // this.init_board()
-                        //this.drawLabel(step.state.move[0], step.state.move[1])
-                        //this.drawLabel(step.state.move[2], step.state.move[3])
-
-                        this.steps.splice(lastIndex, 1)
-                    }
-
-                    // console.log(this.steps);
-
-                    let s = this.steps[this.steps.length - 1]
-                    this.eat_chess = s.state.eat_c
-                    this.play_out = s.state.play_out
-
-                    // console.log(s);
-
-                    // this.chess(s)
-
-
-                    this.$store.dispatch('setStep', s)
+                    // for (let i = 0; i < 2; i++) {
+                    //     let lastIndex = this.steps.length - 1
 
 
 
 
+                    //     // console.log('111111111111111');
+
+                    //     // this.boardcontext.clearRect(0, 0, this.width, this.height);
+                    //     // this.init_board()
+                    //     //this.drawLabel(step.state.move[0], step.state.move[1])
+                    //     //this.drawLabel(step.state.move[2], step.state.move[3])
+
+                    //     this.steps.splice(lastIndex, 1)
+                    // }
+
+                    // // console.log(this.steps);
+
+                    // let s = this.steps[this.steps.length - 1]
+                    // this.eat_chess = s.state.eat_c
+                    // this.play_out = s.state.play_out
+
+                    // // console.log(s);
+
+                    // // this.chess(s)
+
+
+                    // this.$store.dispatch('setStep', s)
+
+                    // console.log(this.steps.length)
+
+                    // console.log(this.myColor)
+                    
+                    this.steps = this.steps.slice(0, -3)
+
+                    this.states = this.states.slice(0, -3)
 
 
                     //this.labelLastStep()
                     this.waitResponse = false
+
+                    // console.log(this.chessboardDisabled);
+                    
+
                 }
 
 
             }
 
         }
-    }
-
-
-
+    },
+    beforeDestroy() {
+        if (this.timer!== null) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    },
 }
+
+
+
+
+
 
 </script>
 
@@ -2586,4 +2733,39 @@ canvas {
     /* 最底层 */
     background-color: rgb(185, 133, 73);
 }
+
+@media (max-width: 768px) {
+ .container {
+    width: 80%;
+    height: auto;
+    /* 假设保持 3:5 的比例 */
+    padding-bottom: calc((80% * 5) / 3);
+  }
+
+  #board {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+ .container {
+    width: 60%;
+    height: auto;
+    padding-bottom: calc((60% * 5) / 3);
+  }
+
+  .exit_btn{
+    position: absolute;
+    /* padding-bottom: 100vm;
+    padding-left: 10vm; */
+  }
+
+  #board {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+
 </style>

@@ -18,11 +18,15 @@
 
 <style scoped>
   .el-container {
-    height: calc(82.9vh);
+    height: calc(82.2vh);
+    /* display: flex;
+    flex-direction: column;
+    flex: 1; */
   }
   .el-main {
     background-color: #E9EEF3;
     color: #333;
     align-items: stretch;
+    /* flex: 1; */
   }
 </style>

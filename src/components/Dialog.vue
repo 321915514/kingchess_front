@@ -26,7 +26,7 @@
 </template>
 
 <script>
-    import {hallChat, roomChat} from "../websocket/send-api";
+    import {hallChat, roomChat, userLogin} from "../websocket/send-api";
 
     
     import { Picker } from "emoji-mart-vue"; //引入组件
@@ -42,6 +42,7 @@
         },
         methods: {
             onSend() {
+                userLogin(this.$store.getters.player.id)
                 if (this.input !== '') {
                     if (this.roomId === 'hall') {
                         hallChat({name: this.$store.getters.player.name, input:this.input})
@@ -160,7 +161,7 @@
                     time: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDay() + ' '
                     + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds(),
                     from: '系统消息',
-                    content: 'Settings里设置语言'
+                    content: '设置里关闭音乐'
                 })
             }else{
                 let date = new Date()
@@ -168,7 +169,7 @@
                     time: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDay() + ' '
                     + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds(),
                     from: '系统消息',
-                    content: 'Settings里设置语言',
+                    content: '白棋走棋禁止来回走',
                     rid: this.roomId
                 })
             }
@@ -182,9 +183,11 @@
 <style scoped>
     .container {
         margin-top: 3%;
+        height:  100%;
     }
     .scrollbar {
-        height: calc(32.1vh);
+        height: calc(31.3vh);
+        
         min-height: 280px;
     }
     .header {

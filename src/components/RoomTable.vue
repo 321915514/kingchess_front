@@ -28,6 +28,8 @@
                         <el-option label="随机" :value="0"></el-option>
                         <el-option label="专家知识" :value="1"></el-option>
                         <el-option label="Alpha Beta" :value="2"></el-option>
+                        <el-option label="resnet" :value="3"></el-option>
+                        <el-option label="vit" :value="4"></el-option>
                     </el-select>
                 </el-form-item>
 
@@ -48,7 +50,7 @@
             </el-table-column>
             <el-table-column align="right">
                 <template slot-scope="scope">
-                    <el-button size="mini" @click="onChallenge(scope.row)" v-if="challengeShow(scope.row)">{{$t('lang.roomTable.challenge')}}</el-button>
+                    <el-button size="mini" @click="onChallenge(scope.row)" v-if="challengeShow(scope.row)" >{{$t('lang.roomTable.challenge')}}</el-button>
                     <el-button size="mini" @click="onSpectate(scope.row)"  v-if="spectateShow(scope.row)" >{{$t('lang.roomTable.spectate')}}</el-button>
                 </template>
             </el-table-column>
@@ -57,10 +59,10 @@
 </template>
 
 <script>
-    import {createRoom, enterRoom, getRooms,createRoomVsAI} from "@/websocket/send-api"
+    import {createRoom, enterRoom, getRooms,createRoomVsAI,roomExpire,userLogin} from "@/websocket/send-api"
     import color from "@/constants/color"
     import {setPlayerStatus} from "../websocket/send-api";
-
+    import eventBus from "@/utils/event-bus";
 
     export default {
         name: "RoomTable",
@@ -71,7 +73,8 @@
                     color: color.black,
                     radio: false,
                     type: 0,
-                }
+                },
+                // disable: false,
             }
         },
         methods: {
@@ -89,10 +92,13 @@
                 
             },
             onCreateRoom() {
+               
+                userLogin(this.$store.getters.player.id)
                 this.dialog.visible = true
             },
             onChallenge(room) {
                 enterRoom(room.id, this.$store.getters.player.id, "challenger")
+                // getRooms()
             },
             onSpectate(room) {
                 enterRoom(room.id, this.$store.getters.player.id, "spectator")
@@ -101,6 +107,7 @@
                 }
             },
             onRefresh() {
+                userLogin(this.$store.getters.player.id)
                 getRooms()
             },
             getChessClass(player) {
@@ -113,7 +120,8 @@
                 return ''
             },
             challengeShow(room) {
-                return room.challenger.id === '' && room.host.id != this.$store.getters.player.id
+                
+                return room.challenger.id != null && room.challenger.id === "" && room.host.id != this.$store.getters.player.id
             },
 
             spectateShow(room){
@@ -122,10 +130,28 @@
                 // console.log(this.$store.getters.player.id);
                 
                 return room.challenger.id != this.$store.getters.player.id && room.host.id != this.$store.getters.player.id
-            }
+            },
+
+
+            startPolling() {
+                this.pollingInterval = setInterval(() => {
+                    // 轮询逻辑
+                    roomExpire()
+                }, 1000);
+            },
+            stopPolling() {
+                clearInterval(this.pollingInterval);
+            },
 
         },
         computed: {
+            // disable(){
+            //     if(this.$store.getters.matchDetails.challenger.id != ''){
+            //         return true
+            //     }else{
+            //         return false
+            //     }
+            // },
             dialogTitle() {
                 return this.$t('lang.roomTable.dialog.title')
             },
@@ -133,9 +159,46 @@
                 return this.$store.getters.rooms
             }
         },
+
+
+
         mounted() {
-            getRooms()
-        }
+            this.startPolling();
+            getRooms()      
+        //     eventBus.$on('chessboard-to-roomtable', (data) => {
+        //         this.receivedData = data;
+        // });
+        },
+
+    //     watch: {
+    //     // 监听rooms数组中每个元素的challenger.id属性的变化
+    //     rooms: {
+    //         handler(newRooms, oldRooms) {
+    //             if (!newRooms.length) {
+    //                     // 列表为空时的处理逻辑，这里可以根据需求进行设置         
+    //                 return;
+    //             }
+    //             // 遍历新的rooms数组，检查每个元素的challenger.id变化
+    //             newRooms.forEach((newRoom, index) => {
+    //                 const oldRoom = oldRooms[index];
+    //                 if (newRoom.challenger && oldRoom.challenger && newRoom.challenger.id!== oldRoom.challenger.id) {
+    //                     if(newRoom.challenger.id!= null && newRoom.challenger.id!== ""){
+    //                         this.disable = true
+    //                     }else{
+    //                         this.disable = false
+    //                     }
+    //                 }
+    //             });
+    //         },
+    //         deep: true
+    //     }
+    // },
+       
+
+        beforeDestroy(){
+            this.stopPolling();
+        },
+
     }
 </script>
 
@@ -143,9 +206,12 @@
     .container {
         margin-left: 2%;
         margin-right: 2%;
+        height: 100%;
+        /* display: flex;
+        flex-direction: column; */
     }
     .scrollbar {
-        height: calc(70.5vh);
+        height: calc(69.9vh);
         min-height: 415px;
     }
     .header {
@@ -158,4 +224,10 @@
     .custom-dialog .el-dialog {
         border-radius: 10px; /* 设置圆角大小 */
     }
+@media screen and (max-width: 768px) {
+ .el-dialog {
+    margin: auto;
+    position: relative;
+  }
+}
 </style>

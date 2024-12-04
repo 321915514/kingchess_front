@@ -4,6 +4,7 @@
             <span class="title">{{$t('lang.profile.profile')}}</span>
         </div>
         <div class="scrollbar">
+
             <el-avatar :size="50" :src="circleUrl"></el-avatar>
             <el-form :model="player">
 <!--                <el-form-item :label="$t('lang.profile.id')">{{player.id}}</el-form-item>-->

@@ -2,6 +2,21 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createPersistedState from 'vuex-persistedstate';
 
+
+// 定义一个用于在特定条件下清空store state的插件函数
+const clearStatePlugin = (store) => {
+    let hasCleared = false;
+
+    store.subscribe((mutation, state) => {
+        if (!hasCleared && mutation.type === 'vuex/INIT') {
+            store.replaceState({});
+            hasCleared = true;
+        }
+    });
+};
+
+
+
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
@@ -34,11 +49,12 @@ const store = new Vuex.Store({
                 roomStatus: 'ready'
             },
             challenger: {
-                name: 'Ann',
+                name: '',
                 color: 'white',
                 turn: false,
                 roomStatus: 'unready'
-            }
+            },
+            black_end_state:{},
         },
         roomChatDTO: {            
             "time": "2020-03-31 16:43:00",
@@ -174,7 +190,7 @@ const store = new Vuex.Store({
         },
         setRooms(state, rooms) {
             state.rooms = rooms
-            
+
         },
         addRoom(state, room) {
             state.rooms.push(room)
@@ -187,6 +203,16 @@ const store = new Vuex.Store({
                 }
             }
             state.rooms.splice(i, 1)
+        },
+        setRoom(state, room){
+            // console.log(room);
+            state.rooms.forEach((room_local, i)=>{
+                if(room.id == room_local.id){
+                    state.rooms[i] = room
+                }else{
+                    state.rooms.push(room)
+                }
+            })
         }
     },
     actions: {
@@ -252,6 +278,9 @@ const store = new Vuex.Store({
         addRoom({commit}, room) {
             commit('addRoom', room)
         },
+        setRoom({commit}, room){  
+            commit('setRoom', room)
+        },
         delRoomById({commit}, roomId) {
             commit('delRoomById', roomId)
         }
@@ -260,7 +289,8 @@ const store = new Vuex.Store({
         createPersistedState({  
         // 插件选项  
         storage: window.localStorage, // 使用 localStorage 作为存储  
-    })  
+    }),
+    clearStatePlugin,
   ]
 })
 

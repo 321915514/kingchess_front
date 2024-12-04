@@ -15,7 +15,7 @@
         </el-form-item>
 
 
-        <el-form-item label="关闭音乐">
+        <el-form-item label="音乐">
         <el-switch
                 v-model="playing"
                 active-color="#13ce66">
@@ -59,7 +59,7 @@
 
 <style scoped>
   .el-container {
-    height: calc(82.9vh);
+    height: calc(82.2vh);
   }
   .el-main {
     background-color: #E9EEF3;

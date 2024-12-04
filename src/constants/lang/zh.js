@@ -28,6 +28,8 @@ export const lang = {
         game: '游戏',
         settings: '设置',
         about: '关于',
+        playhistory: '对弈记录',
+        rank: '排行榜',
         title: '国王与大臣棋'
     },
     about: {
@@ -58,7 +60,7 @@ export const lang = {
         createRoom: '创建房间',
         refresh: '刷新',
         challenge: '挑战',
-        spectate: '旁观',
+        spectate: '观战',
         dialog: {
             title: '创建房间',
             color: '执方'
@@ -85,7 +87,8 @@ export const lang = {
                 eat_11: '吃11子！胜者：',
                 escape: '逃跑了。胜者：',
                 surrender: '认输。胜者：',
-                no_move: '没有走法，胜者：'
+                no_move: '没有走法，胜者：',
+                go_back: "白棋走棋不能来回走，胜者："
             },
             askDraw: {
                 title: '求和',

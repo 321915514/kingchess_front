@@ -117,3 +117,14 @@ export function gameOver(rid,matchDetails ,color,cause) {
         cause,
     })
 }
+
+export function roomExpire(){
+    send(code.roomExpire)
+}
+export function userLogin(id){
+    send(code.userLogin, id)
+}
+
+export function ttlRoom(rid){
+    send(code.ttlRoom, rid)
+}

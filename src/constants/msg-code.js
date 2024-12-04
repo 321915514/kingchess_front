@@ -20,4 +20,7 @@ export default {
     AskDraw: 18,
     GameOver: 19,
     userconnect: 20,
+    roomExpire:21,
+    userLogin:22,
+    ttlRoom:23,
 }
